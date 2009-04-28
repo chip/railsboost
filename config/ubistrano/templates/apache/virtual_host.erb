@@ -1,0 +1,32 @@
+NameVirtualHost *:80
+<% unless ssl.empty? %>
+NameVirtualHost *:443
+<% end %>
+
+<VirtualHost *:80>
+<% unless domains.empty? %>
+  ServerName  <%= domains.first %>
+<% if domains.length > 1 %>
+  ServerAlias <%= domains[1..-1].join ' ' %>
+<% end %>
+<% end %>
+  DocumentRoot <%= deploy_to %>/current/public
+  ErrorLog  <%= deploy_to %>/current/log/error.log
+  CustomLog <%= deploy_to %>/current/log/access.log combined
+<% unless ssl.empty? %>
+  Redirect / https://<%= ssl.first %>/
+<% end %>
+</VirtualHost>
+
+<% ssl.each do |s| %>
+<VirtualHost *:443>
+  ServerName <%= s %>
+  DocumentRoot <%= deploy_to %>/current/public
+  ErrorLog  <%= deploy_to %>/current/log/error.log
+  CustomLog <%= deploy_to %>/current/log/access.log combined
+  
+  SSLEngine On
+  SSLCertificateFile <%= deploy_to %>/current/cert/<%= s %>.crt
+  SSLCertificateKeyFile <%= deploy_to %>/current/cert/<%= s %>.key
+</VirtualHost>
+<% end unless ssl.empty? %>
